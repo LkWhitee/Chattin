@@ -48,11 +48,14 @@ BUFFERDATI = 10240
 
 PortEx = " "
 connected = False
-
+firstTime = True
 def connect(event = None):
-    global ip, socketClient, connected, PortEx
-
-    ip = requests.get('http://ip.42.pl/raw').text
+    global ip, socketClient, connected, PortEx, firstTime
+    if firstTime:
+        firstTime = False
+        ip = requests.get('http://ip.42.pl/raw').text
+        print(ip)
+        
 
     hostname = entryHostArea.getEntry().get()
     port = int(entryPortArea.getEntry().get())
@@ -64,6 +67,7 @@ def connect(event = None):
         recivingMessageThread.start()
         print("Connected")
         checkStatus()
+        sendMessage(message=f"{ip} joined the chat")
 
 def disconnect():
     global connected

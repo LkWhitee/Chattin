@@ -2,7 +2,7 @@ import socket
 import threading as thread
 import time
 
-HOSTNAME = "127.0.0.1"
+HOSTNAME = "192.168.1.239"
 PORT = 9999
 BUFFERDATI = 10240
 TYPE = socket.SOCK_STREAM
@@ -59,7 +59,7 @@ def connection():
     while (running):
         (client_soc, indirizzo) = soc.accept()
         if not client_soc in Client:
-            Client[client_soc] = Utente(client_soc) 
+            Client[client_soc] = Utente(client_soc)
 
 def reply(message: str):
     print(f"{message}")
