@@ -29,23 +29,18 @@ class Utente():
             try:
                 message = self.client.recv(BUFFERDATI)
                 message = message.decode()
-                print(message)
-                print(message[0:1])
                 if (message[0:1] == "/"):
-                    data = message.split(" ")
-                    print(data)
-                    match data[0]:
+                    match message:
                         case "/close": 
                             self.closing = True 
                             self.checkClose()
-                self.reply(message)
+                else:
+                    self.reply(message)
             except Exception as e:
-
                 self.checkClose(e)
                 time.sleep(10)
 
     def checkClose(self, e: Exception = ""):
-        print(self.closing)
         try:
             resolved = False
             if(self.closing):
@@ -65,10 +60,9 @@ def connection():
         (client_soc, indirizzo) = soc.accept()
         if not client_soc in Client:
             Client[client_soc] = Utente(client_soc) 
-        print(f"Client {indirizzo} connected")
 
 def reply(message: str):
-    print(f"Message: {message}")
+    print(f"{message}")
     message = str(message)+"\n"
     for client in Client:
         client.sendall(message.encode())
@@ -76,7 +70,7 @@ def reply(message: str):
 def close(client: socket.socket):
     if client in Client.keys():
         client.close()
-        client[client] = "" 
+        Client[client] = "" 
 
 
 def closeAll():
@@ -96,7 +90,7 @@ def start():
 def consoleCommand():
     while(True):
         inputs = input("")
-        data = inputs.split(" ")
+        data = "Console >>" + inputs.split(" ")
         match(data[0]):
             case "close": closeAll()
             case "reload": reload()

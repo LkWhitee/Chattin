@@ -3,6 +3,7 @@ import socket as soc
 import tkinter as tk
 from tkinter import messagebox
 import time
+import requests
 
 class EntryWithPlaceHolder():
     placeholder = None
@@ -49,7 +50,9 @@ PortEx = " "
 connected = False
 
 def connect(event = None):
-    global socketClient, connected, PortEx
+    global ip, socketClient, connected, PortEx
+
+    ip = requests.get('http://ip.42.pl/raw').text
 
     hostname = entryHostArea.getEntry().get()
     port = int(entryPortArea.getEntry().get())
@@ -62,10 +65,22 @@ def connect(event = None):
         print("Connected")
         checkStatus()
 
+def disconnect():
+    global connected
+    if connected:
+        sendMessage(message="/close")
+        time.sleep(1)
+        connected = False
+        socketClient.close()
+    checkStatus()
+
 def sendMessage(event = None, message : str = " "):
-    if message == " ":
-        message = str(entryMessage.getEntry().get())
-    socketClient.sendall(message.encode())
+    if connected:
+        if message == " ":
+            if message[0:6] == "/":
+                disconnect()
+            message = str(f"{ip} >> " + entryMessage.getEntry().get())
+        socketClient.sendall(message.encode())
     
 
 def checkStatus():
@@ -77,13 +92,32 @@ def checkStatus():
 def recivingMessage():
     global connected
     while(connected):
+        
         dato = socketClient.recv(BUFFERDATI)
         dato = dato.decode()
         writeMessage(dato)
 
 def writeMessage(message: str):
-    print(message)
+    global textArea
+    textArea.config(state='normal')
     textArea.insert("0.0", message)
+    textArea.config(state='disabled')
+
+
+def clear():
+    global textArea
+    textArea.delete("1.0", tk.END)
+
+
+def on_closing():
+    disconnect()
+    if messagebox.askokcancel("Quit", "Vuoi uscire?"):
+        root.destroy()
+        time.sleep(3)
+
+def startconnection(e = None):
+    connectionThread = thread.Thread(target=connect)
+    connectionThread.start()
 
 root = tk.Tk()
 root.geometry("500x500")
@@ -99,35 +133,15 @@ statusLabel = tk.Label(root, text="Status Offline", fg="red")
 statusLabel.grid(row=1, column=3)
 
 
-textArea = tk.Text(root, width=50, height=50)
+textArea = tk.Text(root, width=50, height=50, state='disabled')
 textArea.grid(row=2, columnspan=4)
 
-buttonConnect = tk.Button(root, text="Connect", command=connect).grid(row=0, column=2)
+buttonConnect = tk.Button(root, text="Connect", command=startconnection).grid(row=0, column=2)
 buttonSend = tk.Button(root, text="Send", command=sendMessage).grid(row=1, column=1)
-
-def clear():
-    pass
-
 buttonClear = tk.Button(root, text="Clear", command=clear).grid(row=1, column=2)
 
 recivingMessageThread = thread.Thread(target = recivingMessage)
-
-def on_closing():
-    global connected
-    if connected:
-        sendMessage("/close".encode())
-        time.sleep(1)
-        connected = False
-        socketClient.close()
-    checkStatus()
-    if messagebox.askokcancel("Quit", "Vuoi uscire?"):
-        root.destroy()
-        time.sleep(3)
-
-
 root.protocol("WM_DELETE_WINDOW", on_closing)
 
-#TextArea = tk.Text(root)
-#TextArea.grid()
 
 root.mainloop()
