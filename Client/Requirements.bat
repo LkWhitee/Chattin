@@ -14,6 +14,6 @@ IF %ERRORLEVEL% NEQ 0 (
 )
 
 rem Installa la libreria Requests
-pip install requests
-7
+pip install public_ip
+
 echo Libreria Requests installata correttamente.
