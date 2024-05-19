@@ -44,9 +44,11 @@ firstTime = True
 flagIp = False
 flag = True
 threadrunning = True
+hostnameEx = ""
+portEx = ""
 
 def connect(event=None):
-    global ip, socketClient, connected, firstTime, flag, flagIp, threadrunning
+    global ip, socketClient, connected, firstTime, flag, flagIp, threadrunning, hostnameEx, portEx
 
     if firstTime:
         firstTime = False
@@ -66,16 +68,21 @@ def connect(event=None):
         try:
             hostname = entryHostArea.getEntry().get()
             port = int(entryPortArea.getEntry().get())
-            socketClient = soc.socket()
-            socketClient.connect((hostname, port))
-            connected = True
-            
-            s = thread.Thread(target=recivingMessage, daemon=True).start()
-           
-            print("Connected")
-            checkStatus()
-            sendMessage(message=f"{ip} joined the chat")
+            if portEx != port or hostnameEx != hostname:
+                disconnect()
+                hostnameEx = hostname
+                portEx = port
+                socketClient = soc.socket()
+                socketClient.connect((hostname, port))
+                connected = True
+
+                s = thread.Thread(target=recivingMessage, daemon=True).start()
+                print("Connected")
+                checkStatus()
+                sendMessage(message=f"{ip} joined the chat")
         except Exception as e:
+            connected = False
+            checkStatus()
             messagebox.showwarning(
                 "Connection Error",
                 f"{e} \n in caso di errore persistente contattare email:tommasopillonn@gmail.com"
@@ -98,7 +105,7 @@ def sendMessage(event=None, message=" "):
         if message == " ":
             message = str(f"{ip} >> " + entryMessage.getEntry().get())
             entryMessage.clear()
-        if message.strip():
+        if message.strip(""):
             socketClient.sendall(message.encode())
 
 def checkStatus():
@@ -125,8 +132,6 @@ def writeMessage(message: str):
     textArea.insert("0.0", message)
     textArea.config(state='disabled')
 
-def clear():
-    textArea.delete("1.0", tk.END)
 
 def on_closing():
     disconnect()
